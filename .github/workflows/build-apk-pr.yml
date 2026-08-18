@@ -1,0 +1,55 @@
+name: Build Android APK PR
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct source
+        run: |
+          mkdir -p app-src
+          cat ci/payload_*.b64 | base64 -d > app-src.tar.gz
+          tar -xzf app-src.tar.gz -C app-src
+          rm app-src.tar.gz
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        working-directory: app-src
+        run: npm install --legacy-peer-deps
+
+      - name: Generate Android project
+        working-directory: app-src
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Build debug APK
+        working-directory: app-src/android
+        run: ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: cp app-src/android/app/build/outputs/apk/debug/app-debug.apk Tetrazolio-2.0.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tetrazolio-2.0-APK
+          path: Tetrazolio-2.0.apk
+          if-no-files-found: error
+          retention-days: 14
