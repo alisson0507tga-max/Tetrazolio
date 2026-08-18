@@ -20,6 +20,18 @@ jobs:
           tar -xzf app-src.tar.gz -C app-src
           rm app-src.tar.gz
 
+      - name: Set test app identity
+        working-directory: app-src
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app.config.ts')
+          s = p.read_text()
+          s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.0 Teste')
+          p.write_text(s)
+          PY
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -44,12 +56,12 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/debug/app-debug.apk Tetrazolio-2.0.apk
+        run: cp app-src/android/app/build/outputs/apk/debug/app-debug.apk Tetrazolio-2.0-Teste.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.0-APK
-          path: Tetrazolio-2.0.apk
+          name: Tetrazolio-2.0-Teste-APK
+          path: Tetrazolio-2.0-Teste.apk
           if-no-files-found: error
           retention-days: 14
