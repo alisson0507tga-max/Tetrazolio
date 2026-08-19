@@ -20,6 +20,12 @@ jobs:
           tar -xzf app-src.tar.gz -C app-src
           rm app-src.tar.gz
 
+      - name: Apply v2.1 improvements
+        run: |
+          base64 -d ci/overrides_v21.b64 > overrides-v21.tar.gz
+          tar -xzf overrides-v21.tar.gz -C app-src
+          rm overrides-v21.tar.gz
+
       - name: Set test app identity
         working-directory: app-src
         run: |
@@ -28,7 +34,9 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.0 Teste')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.1 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.1.0"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 2,')
           p.write_text(s)
           PY
 
@@ -47,6 +55,10 @@ jobs:
         working-directory: app-src
         run: npm install --legacy-peer-deps
 
+      - name: Type check
+        working-directory: app-src
+        run: npm run check
+
       - name: Generate Android project
         working-directory: app-src
         run: npx expo prebuild --platform android --clean --no-install
@@ -56,12 +68,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.0-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.1-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.0-Teste-Standalone-APK
-          path: Tetrazolio-2.0-Teste-Standalone.apk
+          name: Tetrazolio-2.1-Teste-Standalone-APK
+          path: Tetrazolio-2.1-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
