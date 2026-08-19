@@ -51,17 +51,17 @@ jobs:
         working-directory: app-src
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Build debug APK
+      - name: Build standalone release APK
         working-directory: app-src/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/debug/app-debug.apk Tetrazolio-2.0-Teste.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.0-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.0-Teste-APK
-          path: Tetrazolio-2.0-Teste.apk
+          name: Tetrazolio-2.0-Teste-Standalone-APK
+          path: Tetrazolio-2.0-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
