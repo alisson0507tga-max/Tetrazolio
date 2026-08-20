@@ -10,49 +10,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Reconstruct source
         run: |
           mkdir -p app-src
           cat ci/payload_*.b64 | base64 -d > app-src.tar.gz
           tar -xzf app-src.tar.gz -C app-src
           rm app-src.tar.gz
-
       - name: Apply v2.1 improvements
         run: |
           cat ci/ov21_*.b64 | base64 -d > overrides-v21.tar.gz
           tar -xzf overrides-v21.tar.gz -C app-src
           rm overrides-v21.tar.gz
-
       - name: Apply v2.2 compact report
         run: |
           cat ci/ov22_*.b64 | base64 -d > overrides-v22.tar.gz
           tar -xzf overrides-v22.tar.gz -C app-src
           rm overrides-v22.tar.gz
-
       - name: Apply v2.3 UX improvements
         run: |
           mkdir -p app-src/assets/images
           git fetch origin apk-v23-melhorias --depth=1
           git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
           python ci/apply-v23.py
-
-      - name: Inspect key source files
-        run: |
-          for f in \
-            'app-src/components/AppHeader.tsx' \
-            'app-src/app/(tabs)/_layout.tsx' \
-            'app-src/app/(tabs)/index.tsx' \
-            'app-src/app/(tabs)/rep2.tsx' \
-            'app-src/app/(tabs)/tabela.tsx' \
-            'app-src/app/(tabs)/historico.tsx' \
-            'app-src/app/(tabs)/relatorio.tsx' \
-            'app-src/lib/tetrazolio-store.ts' \
-            'app-src/lib/confirmation-sound.ts' \
-            'app-src/components/CardClasse.tsx' \
-            'app-src/components/ModalDanoMultiplo.tsx'
-          do
-            echo "===== $f ====="
-            cat "$f"
-            echo
-          done
+      - name: Inspect ScreenContainer
+        run: cat app-src/components/screen-container.tsx
