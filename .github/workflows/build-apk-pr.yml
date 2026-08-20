@@ -37,11 +37,22 @@ jobs:
           git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
           python ci/apply-v23.py
 
-      - name: Inspect source file map
+      - name: Inspect key source files
         run: |
-          echo '=== APP FILES ==='
-          find app-src/app -maxdepth 4 -type f | sort
-          echo '=== COMPONENT FILES ==='
-          find app-src/components -maxdepth 3 -type f | sort
-          echo '=== LIB FILES ==='
-          find app-src/lib -maxdepth 3 -type f | sort
+          for f in \
+            'app-src/components/AppHeader.tsx' \
+            'app-src/app/(tabs)/_layout.tsx' \
+            'app-src/app/(tabs)/index.tsx' \
+            'app-src/app/(tabs)/rep2.tsx' \
+            'app-src/app/(tabs)/tabela.tsx' \
+            'app-src/app/(tabs)/historico.tsx' \
+            'app-src/app/(tabs)/relatorio.tsx' \
+            'app-src/lib/tetrazolio-store.ts' \
+            'app-src/lib/confirmation-sound.ts' \
+            'app-src/components/CardClasse.tsx' \
+            'app-src/components/ModalDanoMultiplo.tsx'
+          do
+            echo "===== $f ====="
+            cat "$f"
+            echo
+          done
