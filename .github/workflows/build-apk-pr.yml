@@ -26,6 +26,19 @@ jobs:
           tar -xzf overrides-v21.tar.gz -C app-src
           rm overrides-v21.tar.gz
 
+      - name: Apply v2.2 compact report
+        run: |
+          cat ci/ov22_*.b64 | base64 -d > overrides-v22.tar.gz
+          tar -xzf overrides-v22.tar.gz -C app-src
+          rm overrides-v22.tar.gz
+
+      - name: Apply v2.3 UX improvements
+        run: |
+          mkdir -p app-src/assets/images
+          git fetch origin apk-v23-melhorias --depth=1
+          git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
+          python ci/apply-v23.py
+
       - name: Set test app identity
         working-directory: app-src
         run: |
@@ -34,9 +47,9 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.1 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.1.0"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 2,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.3 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.3.0"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 4,')
           p.write_text(s)
           PY
 
@@ -64,12 +77,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.1-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.3-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.1-Teste-Standalone-APK
-          path: Tetrazolio-2.1-Teste-Standalone.apk
+          name: Tetrazolio-2.3-Teste-Standalone-APK
+          path: Tetrazolio-2.3-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
