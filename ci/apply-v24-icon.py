@@ -9,7 +9,7 @@ assets.mkdir(parents=True, exist_ok=True)
 # de fundo do adaptive icon, evitando o zoom/corte que ocorreu na 2.3.
 transparent_png_b64 = (
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
-    'AAAADUlEQVR42mNk+M/wHwAF/gL+4VfWAAAAAElFTkSuQmCC'
+    'AAAADUlEQVR4nGNgYGBgAAAABQABpfZFQAAAAABJRU5ErkJggg=='
 )
 (assets / 'transparent-icon.png').write_bytes(base64.b64decode(transparent_png_b64))
 
@@ -26,7 +26,6 @@ for i, line in enumerate(lines):
         break
 
 if not found_main:
-    # Insere logo depois de "name" se o config nao tiver campo icon explicito.
     for i, line in enumerate(lines):
         if line.strip().startswith('name:'):
             indent = line[: len(line) - len(line.lstrip())]
@@ -37,8 +36,8 @@ if not found_main:
 if not found_main:
     raise SystemExit('Nao foi possivel configurar o icone principal')
 
-# Troca somente o bloco adaptiveIcon. A imagem completa passa a ser background,
-# que nao sofre o mesmo zoom da camada foreground nos launchers Android.
+# A imagem completa passa a ser background. A camada foreground transparente
+# evita o zoom automatico que cortou o HUD/detalhes na 2.3.
 start = None
 end = None
 for i, line in enumerate(lines):
