@@ -2,57 +2,39 @@ from pathlib import Path
 
 ROOT = Path('app-src')
 
-
-def replace_once(path: Path, old: str, new: str, label: str):
-    s = path.read_text()
-    if new in s:
-        return
-    if old not in s:
-        raise SystemExit(f'{label}: trecho nao encontrado')
-    path.write_text(s.replace(old, new, 1))
-
-
-# ============================================================
-# 1) PREFERENCIA DE SOM PERSISTENTE
-# ============================================================
+# 1) Preferencia de som persistente
 store = ROOT / 'lib' / 'tetrazolio-store.ts'
 s = store.read_text()
 
-old = "  tema: 'light' | 'dark';\n  analises: AnaliseHistorico[];"
-new = "  tema: 'light' | 'dark';\n  somAtivo: boolean;\n  analises: AnaliseHistorico[];"
 if 'somAtivo: boolean;' not in s:
+    old = "  tema: 'light' | 'dark';\n  analises: AnaliseHistorico[];"
     if old not in s:
         raise SystemExit('Estado: ponto somAtivo nao encontrado')
-    s = s.replace(old, new, 1)
+    s = s.replace(old, "  tema: 'light' | 'dark';\n  somAtivo: boolean;\n  analises: AnaliseHistorico[];", 1)
 
-old = "  tema: 'light',\n  analises: [],"
-new = "  tema: 'light',\n  somAtivo: true,\n  analises: [],"
 if 'somAtivo: true,' not in s:
+    old = "  tema: 'light',\n  analises: [],"
     if old not in s:
         raise SystemExit('estadoInicial: ponto somAtivo nao encontrado')
-    s = s.replace(old, new, 1)
+    s = s.replace(old, "  tema: 'light',\n  somAtivo: true,\n  analises: [],", 1)
 
-old = "  | { type: 'TOGGLE_TEMA' }\n  | { type: 'SET_EXTRAS'; extras: Partial<ExtrasData> }"
-new = "  | { type: 'TOGGLE_TEMA' }\n  | { type: 'TOGGLE_SOM' }\n  | { type: 'SET_EXTRAS'; extras: Partial<ExtrasData> }"
 if "type: 'TOGGLE_SOM'" not in s:
+    old = "  | { type: 'TOGGLE_TEMA' }\n  | { type: 'SET_EXTRAS'; extras: Partial<ExtrasData> }"
     if old not in s:
         raise SystemExit('Action: TOGGLE_SOM ponto nao encontrado')
-    s = s.replace(old, new, 1)
+    s = s.replace(old, "  | { type: 'TOGGLE_TEMA' }\n  | { type: 'TOGGLE_SOM' }\n  | { type: 'SET_EXTRAS'; extras: Partial<ExtrasData> }", 1)
 
-old = "    case 'TOGGLE_TEMA':\n      return { ...state, tema: state.tema === 'light' ? 'dark' : 'light' };\n\n    case 'SET_EXTRAS':"
-new = "    case 'TOGGLE_TEMA':\n      return { ...state, tema: state.tema === 'light' ? 'dark' : 'light' };\n\n    case 'TOGGLE_SOM':\n      return { ...state, somAtivo: !state.somAtivo };\n\n    case 'SET_EXTRAS':"
 if "case 'TOGGLE_SOM':" not in s:
+    old = "    case 'TOGGLE_TEMA':\n      return { ...state, tema: state.tema === 'light' ? 'dark' : 'light' };\n\n    case 'SET_EXTRAS':"
     if old not in s:
         raise SystemExit('Reducer: TOGGLE_SOM ponto nao encontrado')
-    s = s.replace(old, new, 1)
+    s = s.replace(old, "    case 'TOGGLE_TEMA':\n      return { ...state, tema: state.tema === 'light' ? 'dark' : 'light' };\n\n    case 'TOGGLE_SOM':\n      return { ...state, somAtivo: !state.somAtivo };\n\n    case 'SET_EXTRAS':", 1)
 
-# Compatibilidade: dados antigos da 2.3 e anteriores recebem som ligado por padrao.
-old = "        extras: { ...estadoInicial.extras, ...(loaded.extras ?? {}) },\n      };"
-new = "        extras: { ...estadoInicial.extras, ...(loaded.extras ?? {}) },\n        somAtivo: loaded.somAtivo !== false,\n      };"
 if 'somAtivo: loaded.somAtivo !== false' not in s:
+    old = "        extras: { ...estadoInicial.extras, ...(loaded.extras ?? {}) },\n      };"
     if old not in s:
         raise SystemExit('LOAD_STATE: compatibilidade som nao encontrada')
-    s = s.replace(old, new, 1)
+    s = s.replace(old, "        extras: { ...estadoInicial.extras, ...(loaded.extras ?? {}) },\n        somAtivo: loaded.somAtivo !== false,\n      };", 1)
 
 old = "      return { ...estadoInicial, tema: state.tema, analises: state.analises };"
 new = "      return { ...estadoInicial, tema: state.tema, somAtivo: state.somAtivo, analises: state.analises };"
@@ -60,13 +42,9 @@ if new not in s:
     if old not in s:
         raise SystemExit('LIMPAR_TUDO: preservacao do som nao encontrada')
     s = s.replace(old, new, 1)
-
 store.write_text(s)
 
-
-# ============================================================
-# 2) BIP SOMENTE QUANDO A PREFERENCIA ESTIVER LIGADA
-# ============================================================
+# 2) Bip somente quando som estiver ligado
 card = ROOT / 'components' / 'CardClasse.tsx'
 s = card.read_text()
 old = "    dispatch({ type: 'ADICIONAR', rep, classe: classeIdx, tipo });\n    tocarSomConfirmacao();"
@@ -87,16 +65,16 @@ if new not in s:
     s = s.replace(old, new, 1)
 modal.write_text(s)
 
-
-# ============================================================
-# 3) BOTAO SOM LIGADO/DESLIGADO NO RELATORIO
-# ============================================================
+# 3) Botao para ligar/desligar som no Relatorio
 report = ROOT / 'app' / '(tabs)' / 'relatorio.tsx'
 s = report.read_text()
 anchor = """        <TouchableOpacity style={styles.btnLimpar} onPress={limparTudo}>
           <Text style={styles.btnLimparText}>🗑️ LIMPAR TODOS OS DADOS</Text>
         </TouchableOpacity>"""
-sound_button = """        <TouchableOpacity
+if 'Som de contagem: Ligado' not in s:
+    if anchor not in s:
+        raise SystemExit('Relatorio: ponto do botao de som nao encontrado')
+    block = """        <TouchableOpacity
           style={[
             styles.actionBtn,
             {
@@ -121,19 +99,12 @@ sound_button = """        <TouchableOpacity
         </TouchableOpacity>
 
 """ + anchor
-if 'Som de contagem: Ligado' not in s:
-    if anchor not in s:
-        raise SystemExit('Relatorio: ponto do botao de som nao encontrado')
-    s = s.replace(anchor, sound_button, 1)
+    s = s.replace(anchor, block, 1)
 report.write_text(s)
 
-
-# ============================================================
-# 4) CONFERENCIA FINAL ANTES DE SALVAR NO HISTORICO
-# ============================================================
+# 4) Conferencia final antes de salvar no Historico
 hist = ROOT / 'app' / '(tabs)' / 'historico.tsx'
 s = hist.read_text()
-
 old_import = "import { useStore } from '@/lib/tetrazolio-store';"
 new_import = "import { calcularResultados, CONFIG, formatarMedia, getTotalRep, useStore } from '@/lib/tetrazolio-store';"
 if new_import not in s:
@@ -173,9 +144,11 @@ new_save = """  function efetivarSalvamento() {
       '',
       `Vigor: I ${resultados.vigor[0]}% • II ${resultados.vigor[1]}% • Méd ${vigorMed}%`,
       `P.G.: I ${resultados.pg[0]}% • II ${resultados.pg[1]}% • Méd ${pgMed}%`,
-      completas ? '' : '',
-      completas ? 'Confira os dados antes de confirmar.' : '⚠️ Uma ou mais repetições ainda não chegaram a 50 sementes.',
-    ].filter(Boolean).join('\\n');
+      '',
+      completas
+        ? 'Confira os dados antes de confirmar.'
+        : '⚠️ Uma ou mais repetições ainda não chegaram a 50 sementes.',
+    ].join('\\n');
 
     Alert.alert(
       completas ? '✅ Conferir análise' : '⚠️ Análise incompleta',
@@ -193,20 +166,14 @@ new_save = """  function efetivarSalvamento() {
 s = s[:start] + new_save + s[end:]
 hist.write_text(s)
 
-
-# ============================================================
-# 5) SAFE AREA DA TELA TABELA
-# Rep I/II usam AppHeader com insets; Historico usa ScreenContainer;
-# Relatorio ja foi corrigido na 2.3.
-# ============================================================
+# 5) Safe area da Tabela. Rep I/II usam AppHeader; Historico usa ScreenContainer;
+# Relatorio ja respeita insets desde a 2.3.
 tabela = ROOT / 'app' / '(tabs)' / 'tabela.tsx'
 s = tabela.read_text()
-old = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor }]} >"
-# formato real nao tem espaco antes do >; mantemos duas alternativas
 if 'paddingTop: insets.top + 14' not in s:
     target = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor }]} >"
-    target2 = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor }]}>")
-    replacement = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor, paddingTop: insets.top + 14 }]}>")
+    target2 = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor }]} >".replace(' }]} >', ' }]}>' )
+    replacement = "<View style={[styles.header, { backgroundColor: cardBg, borderBottomColor: borderColor, paddingTop: insets.top + 14 }]} >".replace(' }]} >', ' }]}>' )
     if target2 in s:
         s = s.replace(target2, replacement, 1)
     elif target in s:
@@ -215,10 +182,7 @@ if 'paddingTop: insets.top + 14' not in s:
         raise SystemExit('Tabela: cabecalho para safe area nao encontrado')
 tabela.write_text(s)
 
-
-# ============================================================
-# VALIDACOES BASICAS DE INTEGRIDADE
-# ============================================================
+# Validacoes de integridade
 checks = {
     'store-som': 'somAtivo: boolean;' in store.read_text(),
     'card-som': 'if (estado.somAtivo) tocarSomConfirmacao();' in card.read_text(),
