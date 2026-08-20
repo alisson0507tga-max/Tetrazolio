@@ -26,6 +26,122 @@ jobs:
           tar -xzf overrides-v21.tar.gz -C app-src
           rm overrides-v21.tar.gz
 
+      - name: Apply v2.2 compact report
+        run: |
+          cat ci/ov22_*.b64 | base64 -d > overrides-v22.tar.gz
+          tar -xzf overrides-v22.tar.gz -C app-src
+          rm overrides-v22.tar.gz
+
+      - name: Apply v2.3 UX improvements
+        run: |
+          mkdir -p app-src/assets/images app-src/assets/sounds app-src/lib
+          base64 -d ci/icon-v23.b64 > app-src/assets/images/tetrazolio-icon.png
+
+          python - <<'PY'
+          from pathlib import Path
+          import math, struct, wave
+
+          p = Path('app-src/assets/sounds/confirm.wav')
+          rate = 44100
+          duration = 0.085
+          freq = 880.0
+          amp = 0.20
+          n = int(rate * duration)
+          frames = []
+          for i in range(n):
+              t = i / rate
+              fade_in = min(1.0, i / (rate * 0.008))
+              fade_out = min(1.0, (n - 1 - i) / (rate * 0.012))
+              env = min(fade_in, fade_out)
+              v = math.sin(2 * math.pi * freq * t) * 0.85 + math.sin(2 * math.pi * freq * 2 * t) * 0.15
+              sample = int(max(-1, min(1, v * amp * env)) * 32767)
+              frames.append(struct.pack('<h', sample))
+          with wave.open(str(p), 'wb') as w:
+              w.setnchannels(1)
+              w.setsampwidth(2)
+              w.setframerate(rate)
+              w.writeframes(b''.join(frames))
+          PY
+
+          cat > app-src/lib/confirmation-sound.ts <<'EOF'
+          import { createAudioPlayer } from 'expo-audio';
+
+          let confirmationPlayer: ReturnType<typeof createAudioPlayer> | null = null;
+
+          function getConfirmationPlayer() {
+            if (!confirmationPlayer) {
+              confirmationPlayer = createAudioPlayer(require('../assets/sounds/confirm.wav'));
+              confirmationPlayer.volume = 0.32;
+            }
+            return confirmationPlayer;
+          }
+
+          export function tocarSomConfirmacao() {
+            try {
+              const player = getConfirmationPlayer();
+              void player.seekTo(0);
+              player.play();
+            } catch {
+              // Feedback sonoro não pode impedir a contagem.
+            }
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+
+          report = Path('app-src/app/(tabs)/relatorio.tsx')
+          s = report.read_text()
+          old = "contentContainerStyle={{ padding: 10, paddingBottom: insets.bottom + 100 }}"
+          new = """contentContainerStyle={{
+          paddingHorizontal: 10,
+          paddingTop: insets.top + 10,
+          paddingBottom: insets.bottom + 100,
+        }}"""
+          if old not in s:
+              raise SystemExit('Ponto do topo do relatório não encontrado')
+          report.write_text(s.replace(old, new, 1))
+
+          card = Path('app-src/components/CardClasse.tsx')
+          s = card.read_text()
+          anchor = "import { ModalDanoMultiplo } from './ModalDanoMultiplo';\n"
+          if "confirmation-sound" not in s:
+              s = s.replace(anchor, anchor + "import { tocarSomConfirmacao } from '@/lib/confirmation-sound';\n", 1)
+          target = "    dispatch({ type: 'ADICIONAR', rep, classe: classeIdx, tipo });\n    \n    // Só uma nova semente"
+          if target not in s:
+              raise SystemExit('Ponto do som no CardClasse não encontrado')
+          s = s.replace(target, "    dispatch({ type: 'ADICIONAR', rep, classe: classeIdx, tipo });\n    tocarSomConfirmacao();\n    \n    // Só uma nova semente", 1)
+          card.write_text(s)
+
+          modal = Path('app-src/components/ModalDanoMultiplo.tsx')
+          s = modal.read_text()
+          anchor = "import { CONFIG, getTotalRep } from '@/lib/tetrazolio-store';\n"
+          if "confirmation-sound" not in s:
+              s = s.replace(anchor, anchor + "import { tocarSomConfirmacao } from '@/lib/confirmation-sound';\n", 1)
+          target = "    dispatch({ type: 'ADICIONAR', rep, classe, tipo, danoPrincipal: letra });\n    showToast"
+          if target not in s:
+              raise SystemExit('Ponto do som no ModalDanoMultiplo não encontrado')
+          s = s.replace(target, "    dispatch({ type: 'ADICIONAR', rep, classe, tipo, danoPrincipal: letra });\n    tocarSomConfirmacao();\n    showToast", 1)
+          modal.write_text(s)
+
+          cfg = Path('app-src/app.config.ts')
+          s = cfg.read_text()
+          s = s.replace('icon: "./assets/images/icon.png",', 'icon: "./assets/images/tetrazolio-icon.png",')
+          old_icon = '''    adaptiveIcon: {
+      backgroundColor: "#E6F4FE",
+      foregroundImage: "./assets/images/android-icon-foreground.png",
+      backgroundImage: "./assets/images/android-icon-background.png",
+      monochromeImage: "./assets/images/android-icon-monochrome.png",
+    },'''
+          new_icon = '''    adaptiveIcon: {
+      backgroundColor: "#00351c",
+      foregroundImage: "./assets/images/tetrazolio-icon.png",
+    },'''
+          if old_icon not in s:
+              raise SystemExit('Bloco do ícone adaptativo não encontrado')
+          cfg.write_text(s.replace(old_icon, new_icon, 1))
+          PY
+
       - name: Set test app identity
         working-directory: app-src
         run: |
@@ -34,9 +150,9 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.1 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.1.0"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 2,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.3 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.3.0"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 4,')
           p.write_text(s)
           PY
 
@@ -64,12 +180,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.1-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.3-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.1-Teste-Standalone-APK
-          path: Tetrazolio-2.1-Teste-Standalone.apk
+          name: Tetrazolio-2.3-Teste-Standalone-APK
+          path: Tetrazolio-2.3-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
