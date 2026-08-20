@@ -98,24 +98,40 @@ modal.write_text(s)
 
 # 5) Icone aprovado, incluindo adaptive icon sem borda branca
 cfg = ROOT / 'app.config.ts'
-s = cfg.read_text()
-s, n_regular = re.subn(
-    r'(?m)^  icon:\s*"[^"]+",',
-    '  icon: "./assets/images/tetrazolio-icon.png",',
-    s,
-    count=1,
-)
-replacement = '    adaptiveIcon: {\n      backgroundColor: "#00351c",\n      foregroundImage: "./assets/images/tetrazolio-icon.png",\n    },'
-s, n_adaptive = re.subn(
-    r'(?ms)^    adaptiveIcon:\s*\{.*?^    \},',
-    replacement,
-    s,
-    count=1,
-)
-if n_adaptive != 1:
-    raise SystemExit('Bloco adaptiveIcon nao encontrado')
-if n_regular != 1 and 'icon: "./assets/images/tetrazolio-icon.png"' not in s:
+lines = cfg.read_text().splitlines()
+
+# Icone principal
+for i, line in enumerate(lines):
+    if line.startswith('  icon:'):
+        lines[i] = '  icon: "./assets/images/tetrazolio-icon.png",'
+        break
+else:
     raise SystemExit('Icone principal nao encontrado')
-cfg.write_text(s)
+
+# Bloco adaptiveIcon: localizar pela chave, independente de espacos/conteudo interno
+start = None
+end = None
+for i, line in enumerate(lines):
+    if line.strip() == 'adaptiveIcon: {':
+        start = i
+        base_indent = len(line) - len(line.lstrip())
+        for j in range(i + 1, len(lines)):
+            if lines[j].strip() == '},' and (len(lines[j]) - len(lines[j].lstrip())) == base_indent:
+                end = j
+                break
+        break
+
+if start is None or end is None:
+    raise SystemExit('Bloco adaptiveIcon nao encontrado')
+
+indent = ' ' * (len(lines[start]) - len(lines[start].lstrip()))
+new_block = [
+    f'{indent}adaptiveIcon: {{',
+    f'{indent}  backgroundColor: "#00351c",',
+    f'{indent}  foregroundImage: "./assets/images/tetrazolio-icon.png",',
+    f'{indent}}},',
+]
+lines[start:end + 1] = new_block
+cfg.write_text('\n'.join(lines) + '\n')
 
 print('Melhorias v2.3 aplicadas com sucesso')
