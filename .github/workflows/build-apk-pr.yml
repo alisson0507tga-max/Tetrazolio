@@ -1,14 +1,12 @@
-name: Build Android APK PR
+name: Inspect Tetrazólio 2.4 source
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  build:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,50 +37,11 @@ jobs:
           git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
           python ci/apply-v23.py
 
-      - name: Set test app identity
-        working-directory: app-src
+      - name: Inspect source file map
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('app.config.ts')
-          s = p.read_text()
-          s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.3 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.3.0"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 4,')
-          p.write_text(s)
-          PY
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Install dependencies
-        working-directory: app-src
-        run: npm install --legacy-peer-deps
-
-      - name: Generate Android project
-        working-directory: app-src
-        run: npx expo prebuild --platform android --clean --no-install
-
-      - name: Build standalone release APK
-        working-directory: app-src/android
-        run: ./gradlew assembleRelease
-
-      - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.3-Teste-Standalone.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Tetrazolio-2.3-Teste-Standalone-APK
-          path: Tetrazolio-2.3-Teste-Standalone.apk
-          if-no-files-found: error
-          retention-days: 14
+          echo '=== APP FILES ==='
+          find app-src/app -maxdepth 4 -type f | sort
+          echo '=== COMPONENT FILES ==='
+          find app-src/components -maxdepth 3 -type f | sort
+          echo '=== LIB FILES ==='
+          find app-src/lib -maxdepth 3 -type f | sort
