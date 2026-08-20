@@ -1,95 +1,52 @@
-name: Build Tetrazólio 2.4 final
+name: Inspect Tetrazólio 2.5 voice base
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  build:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Reconstruct source
         run: |
           mkdir -p app-src
           cat ci/payload_*.b64 | base64 -d > app-src.tar.gz
           tar -xzf app-src.tar.gz -C app-src
           rm app-src.tar.gz
-
       - name: Apply v2.1 improvements
         run: |
           cat ci/ov21_*.b64 | base64 -d > overrides-v21.tar.gz
           tar -xzf overrides-v21.tar.gz -C app-src
           rm overrides-v21.tar.gz
-
       - name: Apply v2.2 compact report
         run: |
           cat ci/ov22_*.b64 | base64 -d > overrides-v22.tar.gz
           tar -xzf overrides-v22.tar.gz -C app-src
           rm overrides-v22.tar.gz
-
       - name: Apply v2.3 UX improvements
         run: |
           mkdir -p app-src/assets/images
           git fetch origin apk-v23-melhorias --depth=1
           git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
           python ci/apply-v23.py
-
       - name: Apply v2.4 improvements
         run: |
-          python -m py_compile ci/apply-v24.py
           python ci/apply-v24.py
-          python -m py_compile ci/apply-v24-icon.py
           python ci/apply-v24-icon.py
-
-      - name: Set v2.4 test identity
-        working-directory: app-src
+      - name: Inspect voice integration points
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('app.config.ts')
-          s = p.read_text()
-          s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.4 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.4.0"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 5,')
-          p.write_text(s)
-          PY
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Install dependencies
-        working-directory: app-src
-        run: npm install --legacy-peer-deps
-
-      - name: Generate Android project
-        working-directory: app-src
-        run: npx expo prebuild --platform android --clean --no-install
-
-      - name: Build standalone release APK
-        working-directory: app-src/android
-        run: ./gradlew assembleRelease
-
-      - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.4-Teste-Standalone.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Tetrazolio-2.4-Teste-Standalone-APK
-          path: Tetrazolio-2.4-Teste-Standalone.apk
-          if-no-files-found: error
-          retention-days: 14
+          echo '===== package.json ====='
+          cat app-src/package.json
+          echo '===== app.config.ts ====='
+          cat app-src/app.config.ts
+          echo '===== index.tsx ====='
+          cat 'app-src/app/(tabs)/index.tsx'
+          echo '===== rep2.tsx ====='
+          cat 'app-src/app/(tabs)/rep2.tsx'
+          echo '===== store ====='
+          cat app-src/lib/tetrazolio-store.ts
+          echo '===== CardClasse ====='
+          cat app-src/components/CardClasse.tsx
