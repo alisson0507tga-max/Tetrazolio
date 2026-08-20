@@ -1,11 +1,11 @@
-name: Inspect Tetrazólio 2.4 source
+name: Validate Tetrazólio 2.4
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  inspect:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,5 +32,14 @@ jobs:
           git fetch origin apk-v23-melhorias --depth=1
           git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
           python ci/apply-v23.py
-      - name: Inspect ScreenContainer
-        run: cat app-src/components/screen-container.tsx
+      - name: Apply v2.4 improvements
+        run: |
+          python -m py_compile ci/apply-v24.py
+          python ci/apply-v24.py
+      - name: Validate changed source
+        run: |
+          grep -q "somAtivo: boolean" app-src/lib/tetrazolio-store.ts
+          grep -q "Confirmar e salvar" 'app-src/app/(tabs)/historico.tsx'
+          grep -q "paddingTop: insets.top + 14" 'app-src/app/(tabs)/tabela.tsx'
+          grep -q "Som de contagem: Ligado" 'app-src/app/(tabs)/relatorio.tsx'
+          echo 'Tetrazolio 2.4 source validation OK'
