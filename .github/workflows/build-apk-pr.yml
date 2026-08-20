@@ -1,4 +1,4 @@
-name: Build Tetrazólio 2.4 RC
+name: Build Tetrazólio 2.4 final
 
 on:
   pull_request:
@@ -43,6 +43,8 @@ jobs:
         run: |
           python -m py_compile ci/apply-v24.py
           python ci/apply-v24.py
+          python -m py_compile ci/apply-v24-icon.py
+          python ci/apply-v24-icon.py
 
       - name: Set v2.4 test identity
         working-directory: app-src
@@ -82,12 +84,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.4-RC-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.4-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.4-RC-Standalone-APK
-          path: Tetrazolio-2.4-RC-Standalone.apk
+          name: Tetrazolio-2.4-Teste-Standalone-APK
+          path: Tetrazolio-2.4-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
