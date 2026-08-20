@@ -1,6 +1,5 @@
 from pathlib import Path
 import math
-import re
 import struct
 import wave
 
@@ -100,15 +99,23 @@ modal.write_text(s)
 cfg = ROOT / 'app.config.ts'
 lines = cfg.read_text().splitlines()
 
-# Icone principal
+# Icone principal: substituir se existir; se nao, inserir logo apos orientation.
+regular_found = False
 for i, line in enumerate(lines):
-    if line.startswith('  icon:'):
+    if line.strip().startswith('icon:') and (len(line) - len(line.lstrip())) <= 2:
         lines[i] = '  icon: "./assets/images/tetrazolio-icon.png",'
+        regular_found = True
         break
-else:
-    raise SystemExit('Icone principal nao encontrado')
+if not regular_found:
+    for i, line in enumerate(lines):
+        if line.strip().startswith('orientation:'):
+            lines.insert(i + 1, '  icon: "./assets/images/tetrazolio-icon.png",')
+            regular_found = True
+            break
+if not regular_found:
+    raise SystemExit('Nao foi possivel inserir o icone principal')
 
-# Bloco adaptiveIcon: localizar pela chave, independente de espacos/conteudo interno
+# Bloco adaptiveIcon: localizar pela chave, independente de espacos/conteudo interno.
 start = None
 end = None
 for i, line in enumerate(lines):
@@ -122,16 +129,26 @@ for i, line in enumerate(lines):
         break
 
 if start is None or end is None:
-    raise SystemExit('Bloco adaptiveIcon nao encontrado')
+    # Se o bloco nao existir, inserir logo apos "android: {".
+    for i, line in enumerate(lines):
+        if line.strip() == 'android: {':
+            start = i + 1
+            end = i
+            break
+if start is None or end is None:
+    raise SystemExit('Nao foi possivel localizar android/adaptiveIcon')
 
-indent = ' ' * (len(lines[start]) - len(lines[start].lstrip()))
+indent = '    '
 new_block = [
     f'{indent}adaptiveIcon: {{',
     f'{indent}  backgroundColor: "#00351c",',
     f'{indent}  foregroundImage: "./assets/images/tetrazolio-icon.png",',
     f'{indent}}},',
 ]
-lines[start:end + 1] = new_block
+if end >= start:
+    lines[start:end + 1] = new_block
+else:
+    lines[start:start] = new_block
 cfg.write_text('\n'.join(lines) + '\n')
 
 print('Melhorias v2.3 aplicadas com sucesso')
