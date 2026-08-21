@@ -1,4 +1,4 @@
-name: Build Tetrazólio 2.5.3 gatilho Classe
+name: Build Tetrazólio 2.5.4 gatilho fonético
 
 on:
   pull_request:
@@ -52,7 +52,7 @@ jobs:
           python ci/apply-v24-icon.py
           file app-src/assets/images/tetrazolio-icon.png
 
-      - name: Apply v2.5.3 voice counting fixes
+      - name: Apply v2.5.4 voice counting fixes
         run: |
           python -m py_compile ci/apply-v25.py
           python ci/apply-v25.py
@@ -62,8 +62,10 @@ jobs:
           python ci/fix-v252-danos-som.py
           python -m py_compile ci/fix-v253-gatilho-classe.py
           python ci/fix-v253-gatilho-classe.py
+          python -m py_compile ci/fix-v254-gatilho-fonetico.py
+          python ci/fix-v254-gatilho-fonetico.py
 
-      - name: Set v2.5.3 test identity
+      - name: Set v2.5.4 test identity
         working-directory: app-src
         run: |
           python - <<'PY'
@@ -71,10 +73,10 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.3 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.5.3"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 9,')
-          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 9,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.4 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.5.4"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 10,')
+          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 10,')
           p.write_text(s)
           PY
 
@@ -104,12 +106,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.3-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.4-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.5.3-Teste-Standalone-APK
-          path: Tetrazolio-2.5.3-Teste-Standalone.apk
+          name: Tetrazolio-2.5.4-Teste-Standalone-APK
+          path: Tetrazolio-2.5.4-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
