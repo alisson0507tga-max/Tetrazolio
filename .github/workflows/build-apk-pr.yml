@@ -1,4 +1,4 @@
-name: Build Android APK PR
+name: Build Tetrazólio 2.5.11 dicionário de voz
 
 on:
   pull_request:
@@ -26,7 +26,76 @@ jobs:
           tar -xzf overrides-v21.tar.gz -C app-src
           rm overrides-v21.tar.gz
 
-      - name: Set test app identity
+      - name: Apply v2.2 compact report
+        run: |
+          cat ci/ov22_*.b64 | base64 -d > overrides-v22.tar.gz
+          tar -xzf overrides-v22.tar.gz -C app-src
+          rm overrides-v22.tar.gz
+
+      - name: Apply v2.3 UX improvements
+        run: |
+          mkdir -p app-src/assets/images
+          git fetch origin apk-v23-melhorias --depth=1
+          git show FETCH_HEAD:ci/icon-v23.b64 | base64 -d > app-src/assets/images/tetrazolio-icon.png
+          python ci/apply-v23.py
+
+      - name: Apply v2.4 improvements
+        run: |
+          python -m py_compile ci/apply-v24.py
+          python ci/apply-v24.py
+          python -m py_compile ci/apply-v24-icon.py
+          python ci/apply-v24-icon.py
+
+      - name: Apply approved v2.5 icon
+        run: |
+          base64 -d ci/icon-v25.b64 > app-src/assets/images/tetrazolio-icon.png
+          python ci/apply-v24-icon.py
+          file app-src/assets/images/tetrazolio-icon.png
+
+      - name: Apply voice counting fixes through v2.5.7
+        run: |
+          python -m py_compile ci/apply-v25.py
+          python ci/apply-v25.py
+          python -m py_compile ci/fix-v25-continuous.py
+          python ci/fix-v25-continuous.py
+          python -m py_compile ci/fix-v252-danos-som.py
+          python ci/fix-v252-danos-som.py
+          python -m py_compile ci/fix-v253-gatilho-classe.py
+          python ci/fix-v253-gatilho-classe.py
+          python -m py_compile ci/fix-v254-gatilho-fonetico.py
+          python ci/fix-v254-gatilho-fonetico.py
+          python -m py_compile ci/fix-v255-principal-voz.py
+          python ci/fix-v255-principal-voz.py
+          python -m py_compile ci/fix-v256-tempo-real.py
+          python ci/fix-v256-tempo-real.py
+          python -m py_compile ci/fix-v257-comando-curto.py
+          python ci/fix-v257-comando-curto.py
+
+      - name: Apply v2.5.8 icon splash faster voice and single beep
+        run: |
+          base64 -d ci/icon-v258.b64 > app-src/assets/images/tetrazolio-icon.jpg
+          file app-src/assets/images/tetrazolio-icon.jpg
+          python -m py_compile ci/fix-v258-icone-splash-voz.py
+          python ci/fix-v258-icone-splash-voz.py
+          python -m py_compile ci/fix-v258-bip-unico.py
+          python ci/fix-v258-bip-unico.py
+
+      - name: Apply v2.5.9 selectable counting sounds
+        run: |
+          python -m py_compile ci/fix-v259-seletor-sons.py
+          python ci/fix-v259-seletor-sons.py
+
+      - name: Apply v2.5.10 Class 3 voice fix
+        run: |
+          python -m py_compile ci/fix-v2510-classe3.py
+          python ci/fix-v2510-classe3.py
+
+      - name: Apply v2.5.11 voice dictionary fix
+        run: |
+          python -m py_compile ci/fix-v2511-dicionario-voz.py
+          python ci/fix-v2511-dicionario-voz.py
+
+      - name: Set v2.5.11 test identity
         working-directory: app-src
         run: |
           python - <<'PY'
@@ -34,26 +103,30 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.1 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.1.0"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 2,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.11 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.5.11"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 17,')
+          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 17,')
           p.write_text(s)
           PY
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - name: Install dependencies
         working-directory: app-src
-        run: npm install --legacy-peer-deps
+        run: |
+          npm install --legacy-peer-deps
+          npm install expo-speech-recognition@sdk-54 --legacy-peer-deps
+          npm install expo-splash-screen --legacy-peer-deps
 
       - name: Generate Android project
         working-directory: app-src
@@ -64,12 +137,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.1-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.11-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.1-Teste-Standalone-APK
-          path: Tetrazolio-2.1-Teste-Standalone.apk
+          name: Tetrazolio-2.5.11-Teste-Standalone-APK
+          path: Tetrazolio-2.5.11-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
