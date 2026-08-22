@@ -1,4 +1,4 @@
-name: Build Tetrazólio 2.5.8 ícone splash voz rápida
+name: Build Tetrazólio 2.5.9 sons selecionáveis
 
 on:
   pull_request:
@@ -80,7 +80,12 @@ jobs:
           python -m py_compile ci/fix-v258-bip-unico.py
           python ci/fix-v258-bip-unico.py
 
-      - name: Set v2.5.8 test identity
+      - name: Apply v2.5.9 selectable counting sounds
+        run: |
+          python -m py_compile ci/fix-v259-seletor-sons.py
+          python ci/fix-v259-seletor-sons.py
+
+      - name: Set v2.5.9 test identity
         working-directory: app-src
         run: |
           python - <<'PY'
@@ -88,10 +93,10 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.8 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.5.8"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 14,')
-          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 14,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.9 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.5.9"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 15,')
+          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 15,')
           p.write_text(s)
           PY
 
@@ -122,12 +127,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.8-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.9-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.5.8-Teste-Standalone-APK
-          path: Tetrazolio-2.5.8-Teste-Standalone.apk
+          name: Tetrazolio-2.5.9-Teste-Standalone-APK
+          path: Tetrazolio-2.5.9-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
