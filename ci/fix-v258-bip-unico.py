@@ -54,9 +54,10 @@ s = s.replace(old_timer, new_timer, 1)
 # de final, nao agenda outro.
 old_end = r'''  useSpeechRecognitionEvent('end', () => {
     setEscutando(false);
-    if (!manterOuvindo.current) return;
-    setMensagem('Continuando a ouvir…');
-    agendarReinicio();
+    if (manterOuvindo.current) {
+      setMensagem('Continuando a ouvir…');
+      agendarReinicio();
+    }
   });
 '''
 new_end = r'''  useSpeechRecognitionEvent('end', () => {
@@ -69,9 +70,10 @@ new_end = r'''  useSpeechRecognitionEvent('end', () => {
       }, 90);
     }
 
-    if (!manterOuvindo.current) return;
-    setMensagem('Continuando a ouvir…');
-    agendarReinicio();
+    if (manterOuvindo.current) {
+      setMensagem('Continuando a ouvir…');
+      agendarReinicio();
+    }
   });
 '''
 if old_end not in s:
