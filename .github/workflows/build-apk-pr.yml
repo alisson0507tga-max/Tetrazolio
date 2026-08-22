@@ -71,12 +71,14 @@ jobs:
           python -m py_compile ci/fix-v257-comando-curto.py
           python ci/fix-v257-comando-curto.py
 
-      - name: Apply v2.5.8 icon splash and faster voice
+      - name: Apply v2.5.8 icon splash faster voice and single beep
         run: |
           base64 -d ci/icon-v258.b64 > app-src/assets/images/tetrazolio-icon.jpg
           file app-src/assets/images/tetrazolio-icon.jpg
           python -m py_compile ci/fix-v258-icone-splash-voz.py
           python ci/fix-v258-icone-splash-voz.py
+          python -m py_compile ci/fix-v258-bip-unico.py
+          python ci/fix-v258-bip-unico.py
 
       - name: Set v2.5.8 test identity
         working-directory: app-src
