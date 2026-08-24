@@ -1,4 +1,4 @@
-name: Build Tetrazólio 2.5.12 seletor de som compacto
+name: Build Tetrazólio 2.5.13 Classe 3R voz
 
 on:
   pull_request:
@@ -100,7 +100,12 @@ jobs:
           python -m py_compile ci/fix-v2512-seletor-compacto.py
           python ci/fix-v2512-seletor-compacto.py
 
-      - name: Set v2.5.12 test identity
+      - name: Apply v2.5.13 Class 3R voice fix
+        run: |
+          python -m py_compile ci/fix-v2513-classe3r.py
+          python ci/fix-v2513-classe3r.py
+
+      - name: Set v2.5.13 test identity
         working-directory: app-src
         run: |
           python - <<'PY'
@@ -108,10 +113,10 @@ jobs:
           p = Path('app.config.ts')
           s = p.read_text()
           s = s.replace('space.manus.tetrazonio_app.t20260228173727', 'com.alisson.tetrazolio.teste')
-          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.12 Teste')
-          s = s.replace('version: "1.0.0"', 'version: "2.5.12"')
-          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 18,')
-          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 18,')
+          s = s.replace('Tetrazólio 2.0 - Sistema de Análise de Sementes', 'Tetrazólio 2.5.13 Teste')
+          s = s.replace('version: "1.0.0"', 'version: "2.5.13"')
+          s = s.replace('package: env.androidPackage,', 'package: env.androidPackage,\n    versionCode: 19,')
+          s = s.replace('package: bundleId,', 'package: bundleId,\n    versionCode: 19,')
           p.write_text(s)
           PY
 
@@ -142,12 +147,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.12-Teste-Standalone.apk
+        run: cp app-src/android/app/build/outputs/apk/release/app-release.apk Tetrazolio-2.5.13-Teste-Standalone.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tetrazolio-2.5.12-Teste-Standalone-APK
-          path: Tetrazolio-2.5.12-Teste-Standalone.apk
+          name: Tetrazolio-2.5.13-Teste-Standalone-APK
+          path: Tetrazolio-2.5.13-Teste-Standalone.apk
           if-no-files-found: error
           retention-days: 14
