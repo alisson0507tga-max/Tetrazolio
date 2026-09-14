@@ -35,6 +35,8 @@ old = r'''function canonizarClasseFalado(texto: string) {
 new = r'''function canonizarClasseFalado(texto: string) {
   let t = normalizar(texto)
     .replace(/\b(?:classe|classi|clase|crasse|crassi|crase|craci)\b/g, 'classe')
+    // Alias solicitado: "boa" deve contar como Classe 1.
+    .replace(/\bboa\b/g, 'classe 1')
     // O Android frequentemente troca "umidade" por palavras muito parecidas.
     .replace(/\b(?:humidade|humanidade|humildade|unidade|unidades|umidades|um idade)\b/g, 'umidade')
     // Variacoes observadas/esperadas para percevejo.
@@ -60,7 +62,7 @@ s = s.replace(old, new, 1)
 # Reforco de contexto: ajuda o Android a preferir o termo tecnico, mas o parser
 # continua preparado caso ele devolva unidade/unidades.
 ctx_old = "          'Classe 6', 'Classe 7', 'Classe 8', 'classe', 'crasse', 'crassi',\n          'umidade', 'percevejo', 'mecânico',"
-ctx_new = "          'Classe 6', 'Classe 7', 'Classe 8', 'classe', 'crasse', 'crassi',\n          'umidade', 'umidade', 'percevejo', 'mecânico',"
+ctx_new = "          'Classe 6', 'Classe 7', 'Classe 8', 'classe', 'crasse', 'crassi',\n          'umidade', 'umidade', 'boa', 'percevejo', 'mecânico',"
 if ctx_old in s:
     s = s.replace(ctx_old, ctx_new, 1)
 
@@ -74,6 +76,8 @@ if anchor in s and "'3 unidades'" not in s:
     )
 
 for trecho in [
+    "replace(/\\bboa\\b/g, 'classe 1')",
+    "'boa', 'percevejo'",
     'unidade|unidades|umidades',
     "'umidade')",
     'percejo|persejo|perceio|perseio',
